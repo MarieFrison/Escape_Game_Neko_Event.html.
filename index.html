@@ -1,0 +1,897 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Panique au festival</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,400;0,700;1,700&display=swap">
+<style>
+/* Layout: post-it board in the Neko Event mission-sheet style — sticky black HUD, pinned colour notes per mission, brush banners, comic bursts, falling sakura. Single deliberate light look. */
+:root{
+  --paper:#FFFBF7; --paper-2:#F5EEEA; --ink:#1B1718; --ink-soft:#5A5153;
+  --red:#D3202E; --red-dark:#A3121F; --sakura:#F6B8C6; --sakura-soft:#FDE6EB; --line:#E8DDD9;
+  --ok:#1E7A46; --ok-bg:#E1F4E8; --ko:#B3261E; --ko-bg:#FCE3E0;
+  --m1:#7A35B5; --m2:#1166C0; --m3:#4E9A2A; --m4:#E5671A; --m5:#E3A400;
+  --comic:"Comic Sans MS","Comic Sans","Comic Neue","Chalkboard SE","Comic Relief",cursive;
+  --display:var(--comic); --body:var(--comic);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{background-color:var(--paper);color:var(--ink);font-family:var(--comic);font-size:16px;line-height:1.5;
+  background-image:
+    radial-gradient(circle at 100% 0,var(--sakura-soft) 0,transparent 340px),
+    radial-gradient(circle at 0 100%,var(--sakura-soft) 0,transparent 300px),
+    radial-gradient(rgba(211,32,46,.07) 1.2px,transparent 1.4px);
+  background-size:auto,auto,16px 16px;background-attachment:fixed;overflow-x:hidden}
+button{font-family:inherit;font-size:inherit;cursor:pointer;color:inherit}
+input,select{font-family:inherit;font-size:16px}
+:focus-visible{outline:3px solid var(--m2);outline-offset:2px}
+h1,h2,h3{font-family:var(--comic);font-weight:700;line-height:1.15;text-wrap:balance;margin:0}
+p{margin:0}
+.wrap{position:relative;z-index:2;max-width:980px;margin:0 auto;padding-inline:16px;padding-block:26px 40px}
+
+/* decorations */
+.branch{position:fixed;top:0;right:0;width:min(340px,48vw);height:auto;z-index:1;pointer-events:none;opacity:.95}
+.petals{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.petal{position:absolute;top:-24px;width:13px;height:10px;background:var(--sakura);border-radius:12px 0 12px 0;opacity:.85;animation:fall linear infinite}
+@keyframes fall{0%{transform:translate(0,0) rotate(0)}50%{transform:translate(var(--dx),55vh) rotate(200deg)}100%{transform:translate(calc(var(--dx) * -.5),112vh) rotate(420deg)}}
+.torii{display:block;margin:30px auto 0;width:180px;height:auto;opacity:.9}
+
+/* brush banner & bursts & pins */
+.banner{display:inline-block;background:var(--ink);color:#fff;padding:8px 26px 8px 18px;text-transform:uppercase;font-weight:700;letter-spacing:.02em;
+  clip-path:polygon(0 14%,3% 2%,30% 6%,62% 0,100% 8%,97% 48%,100% 92%,70% 100%,35% 94%,2% 100%,0 66%);transform:rotate(-1.5deg)}
+.banner.red{background:var(--red)}
+.burst{position:absolute;top:-18px;right:-8px;z-index:3;width:104px;height:104px;display:grid;place-items:center;text-align:center;padding:20px;
+  background:var(--ink);color:#fff;font-weight:700;font-size:12px;line-height:1.15;transform:rotate(9deg);
+  clip-path:polygon(50% 0,59% 15%,75% 6%,76% 24%,95% 22%,86% 39%,100% 50%,86% 61%,95% 78%,76% 76%,75% 94%,59% 85%,50% 100%,41% 85%,25% 94%,24% 76%,5% 78%,14% 61%,0 50%,14% 39%,5% 22%,24% 24%,25% 6%,41% 15%)}
+.burst span{color:#FFD84D}
+.pin{position:absolute;top:-14px;left:50%;margin-left:-13px;width:26px;height:26px;border-radius:50%;z-index:3;
+  background:radial-gradient(circle at 36% 32%,rgba(255,255,255,.75) 0 3px,transparent 4px),var(--c,var(--red));
+  box-shadow:0 4px 0 rgba(0,0,0,.22),inset -3px -4px 0 rgba(0,0,0,.18)}
+.note{position:relative;background:var(--t,#fff);border-radius:4px 4px 18px 4px;box-shadow:0 10px 22px -12px rgba(60,20,30,.45),0 2px 0 rgba(0,0,0,.05)}
+
+/* HUD */
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--ink);color:#fff;border-bottom:5px solid var(--red);box-shadow:0 6px 18px -8px rgba(0,0,0,.5)}
+.hud-in{max-width:980px;margin:0 auto;padding:10px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:18px;font-style:italic}
+.brand svg{width:36px;height:36px}
+.brand em{color:#ff5a66}
+.timer{font-weight:700;font-size:28px;font-variant-numeric:tabular-nums;letter-spacing:.04em;min-width:100px;line-height:1.1}
+.timer.warn{color:#FFD84D}.timer.over{color:#ff5a66;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.55}}
+.slots{display:flex;gap:7px;margin-left:auto}
+.slot{width:38px;height:46px;border:2px dashed #7c7274;border-radius:8px;display:grid;place-items:center;font-weight:700;font-size:24px;color:#fff;position:relative}
+.slot.filled{border:2px solid #fff;background:var(--red);transform:rotate(-4deg);animation:pop .4s}
+.slot.filled:nth-child(even){transform:rotate(4deg)}
+@keyframes pop{0%{transform:scale(.3)}70%{transform:scale(1.15)}}
+.slot small{position:absolute;top:0;left:4px;font-size:10px;color:#bcb3b5}
+.slot.filled small{color:#ffd6da}
+.teamtag{font-size:13px;color:#e4dcde}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:3px solid var(--ink);background:var(--ink);color:#fff;padding:10px 22px;border-radius:999px;font-weight:700;
+  box-shadow:0 4px 0 #000;transition:transform .1s,box-shadow .1s,background .12s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 0 #000}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
+.btn.red{background:var(--red);border-color:var(--ink)}
+.btn.red:hover{background:var(--red-dark)}
+.btn.ghost{background:#fff;color:var(--ink)}
+.btn.small{padding:7px 16px;font-size:14px}
+.btn[disabled]{opacity:.4;cursor:not-allowed;transform:none;box-shadow:0 4px 0 #000}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+/* Intro */
+.intro{display:grid;grid-template-columns:1.25fr 1fr;gap:34px;align-items:start;padding-top:8px}
+.intro-hero{position:relative;min-width:0}
+.eyebrow{font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:13px;color:var(--red)}
+.big{font-size:clamp(42px,7.5vw,74px);margin:6px 0 22px;line-height:1.02;font-style:italic;text-transform:uppercase;transform:rotate(-2deg);transform-origin:left}
+.big span{display:inline-block;background:var(--red);color:#fff;padding:2px 16px 6px;margin-top:6px;box-shadow:6px 6px 0 var(--ink);
+  clip-path:polygon(0 6%,98% 0,100% 94%,2% 100%)}
+.mail{background:#FFF7C9;border-radius:4px 4px 20px 4px;padding:26px 22px 20px;box-shadow:0 12px 24px -12px rgba(60,40,0,.5);position:relative;transform:rotate(-.8deg)}
+.mail .from{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--ink-soft);margin-bottom:10px}
+.mail blockquote{margin:0;font-size:17px}
+.mail blockquote strong{color:var(--red)}
+.rules{display:grid;gap:12px;margin-top:26px}
+.rule{display:flex;gap:14px;align-items:center}
+.rule b{background:var(--ink);color:#fff;min-width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:15px;box-shadow:3px 3px 0 var(--red);flex:none}
+.card{background:#fff;border:3px solid var(--ink);border-radius:18px;padding:22px;box-shadow:6px 6px 0 var(--ink);position:relative}
+.field{display:grid;gap:6px;margin:14px 0}
+.field label{font-weight:700;font-size:15px}
+.field input{border:2px solid var(--ink);border-radius:12px;padding:11px 12px;background:var(--paper)}
+.field input:focus{outline:3px solid var(--sakura);outline-offset:1px}
+
+/* Hub */
+.hub-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;align-items:end;margin-bottom:34px}
+.hub-head h2{font-size:clamp(22px,3.6vw,30px);margin-top:8px}
+.hub-head p{color:var(--ink-soft);max-width:44ch}
+.bureaux{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:40px 26px;padding-top:8px}
+.bureau{text-align:left;border:none;padding:0;display:flex;flex-direction:column;background:var(--t);border-radius:4px 4px 22px 4px;position:relative;
+  box-shadow:0 12px 24px -12px rgba(60,20,30,.5);transition:transform .18s, box-shadow .18s;transform:rotate(-1.2deg)}
+.bureau:nth-child(even){transform:rotate(1.2deg)}
+.bureau:hover{transform:rotate(0) translateY(-6px) scale(1.02);box-shadow:0 20px 30px -14px rgba(60,20,30,.55)}
+.bureau::after{content:"";position:absolute;right:0;bottom:0;width:34px;height:34px;background:linear-gradient(135deg,rgba(0,0,0,.12) 0 50%,var(--paper) 50%);border-radius:0 0 22px 0}
+.bureau .top{padding:30px 18px 6px;display:flex;gap:12px;align-items:center}
+.avatar{width:54px;height:54px;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center;font-weight:700;font-size:18px;flex:none;border:3px solid #fff;box-shadow:0 0 0 3px var(--c)}
+.bureau .top small{display:inline-block;font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;background:var(--ink);color:#fff;padding:2px 10px;margin-bottom:4px;transform:rotate(-2deg);clip-path:polygon(0 10%,100% 0,97% 100%,3% 92%)}
+.bureau .top strong{display:block;font-size:18px}
+.bureau .body{padding:6px 18px 22px;display:grid;gap:10px;flex:1}
+.bureau h3{font-size:19px;color:var(--c)}
+.bureau .burst{width:92px;height:92px;font-size:11px;padding:16px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;background:#fff;color:var(--c);border:2px solid var(--c)}
+.status{margin-top:4px;font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px}
+.status.done{color:var(--ok)}
+.bureau.done .avatar{background:var(--ok);box-shadow:0 0 0 3px var(--ok)}
+.stamp-done{position:absolute;right:16px;bottom:30px;border:3px solid var(--ok);color:var(--ok);font-weight:700;padding:4px 10px;border-radius:8px;transform:rotate(-12deg);background:rgba(255,255,255,.7);font-size:14px;letter-spacing:.06em}
+.final-card{margin-top:44px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;background:var(--ink);color:#fff;border-radius:20px;padding:22px 24px;position:relative;
+  box-shadow:6px 6px 0 var(--red)}
+.final-card h3{font-size:22px}
+.final-card p{color:#e4dcde;font-size:15px}
+.final-card .btn{border-color:#fff;box-shadow:0 4px 0 #fff}
+
+/* Room */
+.room-head{display:flex;flex-wrap:wrap;gap:18px;align-items:center;background:var(--t);border-radius:4px 4px 22px 4px;padding:30px 22px 22px;margin:18px 0 28px;position:relative;
+  box-shadow:0 12px 24px -12px rgba(60,20,30,.5);transform:rotate(-.6deg)}
+.room-head .avatar{width:72px;height:72px;font-size:24px}
+.room-head h2{font-size:clamp(22px,3.6vw,30px)}
+.room-head .who{display:inline-block;font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;background:var(--c);color:#fff;padding:2px 10px;margin-bottom:4px}
+.bubble{background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:20px;padding:12px 16px;flex:1 1 300px;min-width:0;position:relative;margin-right:70px}
+.bubble::before{content:"";position:absolute;left:-14px;top:22px;border:8px solid transparent;border-right:12px solid var(--ink)}
+.back{background:#fff;border:2px solid var(--ink);border-radius:999px;font-weight:700;color:var(--ink);padding:6px 14px;box-shadow:0 3px 0 var(--ink)}
+.step{background:#fff;border:3px solid var(--ink);border-radius:18px;padding:22px;margin-bottom:22px;box-shadow:5px 5px 0 var(--c);transition:opacity .2s}
+.step h3{font-size:20px;margin-bottom:8px;display:flex;gap:12px;align-items:center}
+.step h3 .n{background:var(--c);color:#fff;font-size:16px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;flex:none;border:3px solid var(--ink)}
+.step .q{color:var(--ink-soft);margin-bottom:16px;max-width:72ch}
+.step.locked{opacity:.4;pointer-events:none;filter:grayscale(.6)}
+.step.locked h3::after{content:"🔒";font-size:18px}
+.step.solved{box-shadow:5px 5px 0 var(--ok)}
+.fb{margin-top:14px;padding:11px 16px;border-radius:12px;font-size:15px;border:2px solid currentColor}
+.fb.ok{background:var(--ok-bg);color:var(--ok)}
+.fb.ko{background:var(--ko-bg);color:var(--ko);animation:shake .35s}
+.fb:empty{display:none}
+.res-ref{font-size:14px;color:var(--ink-soft);font-weight:700}
+
+/* Choice grids */
+.opts{display:grid;gap:12px}
+.opts.g4{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+.opt{border:2px solid var(--ink);background:#fff;border-radius:14px;padding:12px 16px;text-align:left;box-shadow:0 4px 0 var(--ink);transition:transform .1s,box-shadow .1s,background .12s}
+.opt:hover{transform:translateY(-2px);box-shadow:0 6px 0 var(--ink);background:var(--t,var(--paper-2))}
+.opt:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.opt.sel{background:var(--t,var(--paper-2));border-color:var(--c);box-shadow:0 4px 0 var(--c)}
+.opt.good{border-color:var(--ok);background:var(--ok-bg);box-shadow:0 4px 0 var(--ok)}
+.opt.bad{border-color:var(--ko);background:var(--ko-bg);box-shadow:0 4px 0 var(--ko)}
+.opt[disabled]{cursor:default}
+.logo-opt{display:grid;gap:8px;justify-items:center;text-align:center}
+.logo-opt svg{width:100%;max-width:150px;height:auto;aspect-ratio:1}
+.logo-opt span{font-size:14px;font-weight:700}
+
+/* Orderer */
+.pool,.seq{display:flex;flex-wrap:wrap;gap:10px;min-height:48px}
+.seq{border:3px dashed var(--c);border-radius:14px;padding:10px;margin:12px 0;background:var(--t,var(--paper))}
+.tok{border:2px solid var(--ink);background:#fff;border-radius:999px;padding:7px 16px;font-weight:700;font-size:14px;box-shadow:0 3px 0 var(--ink)}
+.tok:hover{transform:translateY(-1px)}
+.tok.used{opacity:.25;pointer-events:none}
+.seq .tok{background:var(--c);color:#fff;box-shadow:none;animation:pop .25s}
+.seq .tok i{font-style:normal;opacity:.8;margin-right:4px}
+.seq:empty::before{content:"Clique sur les étiquettes dans le bon ordre…";color:var(--ink-soft);font-size:14px;padding:6px}
+
+/* Instagram mock */
+.insta-wrap{display:grid;grid-template-columns:minmax(0,340px) 1fr;gap:24px;align-items:start}
+.insta{border:3px solid var(--ink);border-radius:18px;background:#fff;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px;box-shadow:6px 6px 0 var(--m2)}
+.hot{display:block;width:100%;text-align:left;border:2px solid transparent;background:none;padding:6px 10px;border-radius:8px;font-family:inherit}
+.hot:hover{border-color:var(--m2);background:#EAF3FD}
+.hot.found{border-color:var(--ko);background:var(--ko-bg)}
+.hot.miss{animation:shake .35s}
+.ig-head{display:flex;align-items:center;gap:8px;font-weight:700}
+.ig-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(45deg,#f9a825,#e91e63,#7b1fa2);display:grid;place-items:center;padding:2px}
+.ig-av svg{width:26px;height:26px}
+.ig-img{aspect-ratio:1;background:linear-gradient(160deg,#1B1718 0,#3a1216 55%,#D3202E 100%);color:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px;padding:16px;text-align:center;position:relative;margin:4px 0}
+.ig-img .t{font-family:var(--comic);font-weight:700;font-size:24px;line-height:1.1;font-style:italic}
+.ig-img .pale{color:#4a3c3e;font-size:11px}
+.ig-img svg{width:80px;height:80px}
+.found-list{display:grid;gap:8px;margin-top:6px}
+.found-list li{list-style:none}
+.counter{font-weight:700;font-size:44px;color:var(--m2);line-height:1}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+/* Stand plan */
+.plan-wrap{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:22px;align-items:start}
+.plan{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:8px;background:repeating-linear-gradient(45deg,#F4EFE6 0 10px,#EFE8DC 10px 20px);border:4px solid var(--ink);border-radius:10px;padding:10px;position:relative}
+.plan::before{content:"NEKO EVENT";position:absolute;top:-16px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-weight:700;font-size:12px;padding:3px 14px;border-radius:6px;letter-spacing:.1em}
+.zone{min-height:88px;border:2px dashed #b1a5a8;border-radius:10px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px;text-align:center;font-size:13px}
+.zone .zl{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);font-weight:700}
+.zone .zi{font-weight:700;color:var(--m3)}
+.zone.fond,.zone.devant{grid-column:1/-1}
+.zone.armed{border-color:var(--m3);background:#F0F8E8;cursor:pointer;animation:glow 1.2s infinite}
+@keyframes glow{50%{background:#E1F1D1}}
+.zone.good{border-style:solid;border-color:var(--ok);background:var(--ok-bg);animation:none}
+.zone.bad{border-style:solid;border-color:var(--ko);background:var(--ko-bg);animation:none}
+.allee{text-align:center;font-size:13px;font-weight:700;letter-spacing:.2em;color:var(--ink-soft);margin-top:8px}
+.items{display:grid;gap:10px}
+.item{border:2px solid var(--ink);background:#fff;border-radius:12px;padding:10px 14px;text-align:left;font-weight:700;font-size:14px;box-shadow:0 4px 0 var(--m3)}
+.item.sel{background:var(--m3);color:#fff;transform:translateY(-2px)}
+.item.placed{opacity:.35}
+.calc{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.calc input{width:130px;border:3px solid var(--ink);border-radius:12px;padding:10px 12px;font-variant-numeric:tabular-nums;font-weight:700;font-size:18px}
+.price-tag{display:inline-flex;align-items:center;gap:12px;background:var(--ink);color:#fff;border-radius:12px 40px 40px 12px;padding:10px 26px 10px 16px;margin-bottom:14px;font-weight:700;position:relative;transform:rotate(-2deg)}
+.price-tag::after{content:"";position:absolute;right:12px;width:10px;height:10px;border-radius:50%;background:var(--paper)}
+.price-tag b{color:#FFD84D;font-size:24px}
+
+/* Matching */
+.match{display:grid;gap:12px}
+.mrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:center;border:2px solid var(--ink);border-radius:14px;padding:12px;background:#fff}
+.mrow .who{display:flex;gap:12px;align-items:center;font-weight:700}
+.mrow .who .avatar{width:46px;height:46px;font-size:22px;background:var(--t);box-shadow:0 0 0 3px var(--c)}
+.mrow select{width:100%;border:2px solid var(--ink);border-radius:10px;padding:10px;font-size:15px;background:#fff}
+.mrow.good{border-color:var(--ok);background:var(--ok-bg)}
+.mrow.bad{border-color:var(--ko);background:var(--ko-bg)}
+
+/* Dialogue */
+.chat{display:grid;gap:10px;margin-bottom:14px;padding:14px;border-radius:16px;background:var(--t,var(--paper-2))}
+.msg{max-width:80%;padding:10px 16px;border-radius:18px;border:2px solid var(--ink);animation:pop .25s}
+.msg.v{background:#fff;justify-self:start;border-bottom-left-radius:4px}
+.msg.me{background:var(--m5);justify-self:end;border-bottom-right-radius:4px}
+.msg small{display:block;font-size:11px;opacity:.75;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.gauge{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-weight:700;font-size:16px}
+.gauge .bar{flex:1;height:18px;border-radius:99px;background:#fff;border:2px solid var(--ink);overflow:hidden}
+.gauge .fill{height:100%;background:repeating-linear-gradient(-45deg,var(--m5) 0 10px,#F2C230 10px 20px);transition:width .4s}
+.stamp-card{display:flex;gap:8px;flex-wrap:wrap;background:var(--ink);padding:14px 16px;border-radius:14px;margin-bottom:14px;color:#fff;align-items:center;transform:rotate(-1deg);box-shadow:5px 5px 0 var(--m5)}
+.stamp{width:38px;height:38px;border-radius:50%;border:2px dashed #8d8385;display:grid;place-items:center}
+
+/* Code / final */
+.codebox{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 16px}
+.codebox input{width:58px;height:70px;text-align:center;font-weight:700;font-size:32px;border:3px solid var(--ink);border-radius:12px;text-transform:uppercase;background:#fff;box-shadow:0 5px 0 var(--ink)}
+.codebox input:focus{outline:none;background:var(--sakura-soft);border-color:var(--red);box-shadow:0 5px 0 var(--red)}
+.fragments{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 14px}
+.frag{background:var(--paper-2);border:2px solid var(--ink);border-radius:12px;padding:8px 12px;font-size:14px}
+.frag b{font-size:20px;color:var(--red)}
+
+/* Win */
+.win-hero{text-align:center;padding:10px 0}
+.win-hero h2{font-size:clamp(36px,6.5vw,60px);transform:rotate(-2deg);font-style:italic;text-transform:uppercase;margin-top:12px}
+.win-hero h2 span{display:inline-block;background:var(--red);color:#fff;padding:0 16px 4px;box-shadow:6px 6px 0 var(--ink)}
+.win-mask{display:flex;justify-content:center;animation:bounce 1.6s ease-in-out infinite}
+@keyframes bounce{50%{transform:translateY(-10px) rotate(4deg)}}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin:26px 0}
+.stat{background:#fff;border:3px solid var(--ink);border-radius:16px;padding:14px;text-align:center;box-shadow:5px 5px 0 var(--red)}
+.stat:nth-child(2){box-shadow:5px 5px 0 var(--m2)}.stat:nth-child(3){box-shadow:5px 5px 0 var(--m4)}.stat:nth-child(4){box-shadow:5px 5px 0 var(--m3)}
+.stat b{display:block;font-size:34px;font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--ink-soft);font-weight:700}
+.table-wrap{overflow-x:auto;background:#fff;border:3px solid var(--ink);border-radius:16px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th,td{padding:11px 14px;text-align:left;border-bottom:2px dashed var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.08em;background:var(--ink);color:#fff}
+tbody tr:nth-child(odd){background:#FFFBF7}
+td .code{font-weight:700;color:var(--red)}
+.confetti{position:fixed;top:-12px;width:9px;height:14px;z-index:30;pointer-events:none;animation:fall linear forwards}
+
+/* Modal */
+.modal{position:fixed;inset:0;background:rgba(27,23,24,.6);display:grid;place-items:center;z-index:50;padding:16px}
+.modal .card{max-width:540px;width:100%;max-height:85vh;overflow:auto}
+.modal h3{font-size:22px;margin-bottom:8px}
+.sol{font-size:14px;display:grid;gap:8px;margin-top:12px}
+.sol div{background:var(--paper-2);border-radius:10px;padding:8px 10px}
+.footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:20px;font-size:13px;color:var(--ink-soft)}
+.linkbtn{background:none;border:none;text-decoration:underline;color:var(--ink-soft);padding:0;font-size:13px}
+.hint-box{background:#FFF4C2;border:2px dashed #D9B200;border-radius:12px;padding:10px 14px;font-size:15px;margin-top:12px}
+.hint-box:empty{display:none}
+
+.padlock{display:flex;flex-wrap:wrap;gap:14px;align-items:center;background:var(--t,var(--paper-2));border:3px dashed var(--c);border-radius:16px;padding:16px}
+.lock-ico{font-size:44px;line-height:1}
+.lock-in{width:220px;max-width:100%;border:3px solid var(--ink);border-radius:12px;padding:10px 14px;font-weight:700;font-size:22px;letter-spacing:.18em;text-transform:uppercase;background:#fff}
+.cipher{display:inline-block;font-size:20px;font-weight:700;letter-spacing:.06em;background:var(--ink);color:#FFD84D;padding:10px 16px;border-radius:12px;margin:8px 0;transform:rotate(-1deg)}
+.clues{display:grid;gap:10px;margin-bottom:16px}
+.clue{display:flex;gap:12px;align-items:flex-start;background:var(--t);border-left:6px solid var(--c);border-radius:10px;padding:10px 14px}
+.clue .ci{font-size:28px;line-height:1}
+.clue small{font-weight:700;color:var(--ink-soft);text-transform:uppercase;font-size:11px;letter-spacing:.06em}
+.alpha{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 14px}
+.alpha span{display:grid;justify-items:center;min-width:32px;padding:3px 0;border:2px solid var(--ink);border-radius:8px;background:#fff}
+.alpha b{font-size:16px}.alpha small{font-size:10px;color:var(--ink-soft)}
+.mrow .who svg{width:84px;height:84px;flex:none}
+.slot.filled{font-size:20px}
+@media (max-width:720px){
+  .intro,.insta-wrap,.plan-wrap{grid-template-columns:1fr}
+  .mrow{grid-template-columns:1fr}
+  .slots{margin-left:0}
+  .msg{max-width:92%}
+  .bubble{margin-right:0}
+  .burst{width:84px;height:84px;font-size:10px;padding:14px;right:-4px}
+  .room-head{padding-top:60px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.petals{display:none}}
+</style>
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+
+
+<div class="hud" id="hud" hidden>
+  <div class="hud-in">
+    <div class="brand"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#mask"/></svg>NEKO <em>EVENT</em></div>
+    <div><div class="teamtag" id="teamtag"></div><div class="timer" id="timer" aria-live="off">45:00</div></div>
+    <div class="slots" id="slots" aria-label="Code de la tablette"></div>
+  </div>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="mask" viewBox="0 0 100 100">
+      <circle cx="50" cy="52" r="46" fill="#D3202E"/>
+      <path d="M22 18 L38 40 L62 40 L78 18 L80 56 Q78 80 50 90 Q22 80 20 56 Z" fill="#fff" stroke="#1B1718" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M26 26 L34 40 L28 42 Z M74 26 L66 40 L72 42 Z" fill="#1B1718"/>
+      <path d="M30 56 Q38 50 45 56 Q38 58 30 56 Z M70 56 Q62 50 55 56 Q62 58 70 56 Z" fill="#1B1718"/>
+      <path d="M24 64 L36 66 M24 70 L35 70 M76 64 L64 66 M76 70 L65 70" stroke="#1B1718" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M47 76 L53 76 L50 80 Z" fill="#1B1718"/>
+      <path d="M50 38 a5 5 0 1 0 0.1 0" fill="none"/>
+      <path d="M46 34 A6 6 0 0 0 54 34" fill="none" stroke="#D3202E" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="50" cy="44" r="3.2" fill="#D3202E"/>
+    </symbol>
+  </defs>
+</svg>
+
+<svg class="branch" viewBox="0 0 340 210" aria-hidden="true">
+  <defs><g id="fl"><g fill="#F6B8C6" stroke="#E98AA0" stroke-width="1">
+    <ellipse cx="0" cy="-8" rx="6" ry="9"/><ellipse cx="0" cy="-8" rx="6" ry="9" transform="rotate(72)"/><ellipse cx="0" cy="-8" rx="6" ry="9" transform="rotate(144)"/><ellipse cx="0" cy="-8" rx="6" ry="9" transform="rotate(216)"/><ellipse cx="0" cy="-8" rx="6" ry="9" transform="rotate(288)"/></g>
+    <circle r="3.5" fill="#D3202E"/></g></defs>
+  <g fill="none" stroke="#5B3A2E" stroke-linecap="round">
+    <path d="M345 8 C 290 34, 240 22, 190 56 S 100 92, 30 82" stroke-width="7"/>
+    <path d="M250 30 C 240 70, 260 100, 240 140" stroke-width="4"/>
+    <path d="M150 74 C 130 110, 150 130, 128 160" stroke-width="3.5"/>
+    <path d="M300 22 C 310 60, 300 80, 318 110" stroke-width="3"/>
+  </g>
+  <use href="#fl" x="40" y="80"/><use href="#fl" x="80" y="92" transform="rotate(20 80 92)"/><use href="#fl" x="120" y="80"/>
+  <use href="#fl" x="190" y="56" transform="rotate(30 190 56)"/><use href="#fl" x="230" y="34"/><use href="#fl" x="242" y="96"/>
+  <use href="#fl" x="240" y="140" transform="rotate(50 240 140)"/><use href="#fl" x="140" y="118"/><use href="#fl" x="128" y="160"/>
+  <use href="#fl" x="280" y="20"/><use href="#fl" x="306" y="68" transform="rotate(10 306 68)"/><use href="#fl" x="318" y="110"/>
+  <use href="#fl" x="165" y="60"/>
+</svg>
+<div class="petals" id="petals" aria-hidden="true"></div>
+<main class="wrap" id="app"></main>
+
+<script>
+(function(){
+"use strict";
+const DURATION = 45*60*1000, PENALTY = 2*60*1000, WRONG = 30*1000, TEACHER_HASH = "4af723a38163608eb8bc56ce50c896cb09a13f5f994ab9fdebe8ad4946da61a8", SAVE_KEY = "neko-escape-v3";
+const WORD = "OTAKU";
+
+const BUREAUX = [
+ {id:"b1", c:"var(--m1)", ini:"CM", who:"Camille Moreau", role:"Responsable Communication", mission:"Mission 1 · Identité du stand",
+  title:"Le bureau de l'identité visuelle", msg:"Le stagiaire a tout mélangé dans mon dossier « identité » ! Remettez de l'ordre… puis ouvrez mon tiroir : j'y ai caché un indice pour la tablette.",
+  comp:[["C1.1","Rechercher et exploiter les informations"],["C2.3","Contribuer à la communication commerciale"]], res:"Ressources 01 et 03", icon:"📝", clue:'<strong>Post-it violet :</strong> « Le code de la tablette a été chiffré. Message chiffré : <strong>T Y F P Z</strong> »',
+  hint:"Ressource 03 : les critères du logo sont sous « Le logo », ceux du slogan sous « Le slogan ». Logo D : compare-le avec les « Exemples pour s'inspirer ». Pour le tiroir, compte dans les Ressources 01 et 03."},
+ {id:"b2", c:"var(--m2)", ini:"LB", who:"Lucas Bernard", role:"Responsable Marketing", mission:"Mission 2 · Communication",
+  title:"Le bureau des réseaux sociaux", msg:"Ma publication Instagram part dans 10 minutes et elle est pleine d'erreurs ! Corrigez-la, puis connectez-vous à notre compte : un indice vous attend dans mes messages.",
+  comp:[["C2.3","Contribuer à la communication commerciale"],["C3.3","Utiliser les outils numériques adaptés"]], res:"Ressources 04 et 09", icon:"📱", clue:'<strong>Message privé :</strong> « Pour déchiffrer, il faut faire <strong>reculer</strong> chaque lettre dans l\'alphabet. »',
+  hint:"Mets-toi à la place d'un visiteur : sait-il QUAND et OÙ venir ? Peut-il tout lire ? Relis chaque phrase. Pour les outils, relis la Ressource 09. Le mot de passe est dans « Les objectifs d'une communication efficace » (Ressource 04)."},
+ {id:"b3", c:"var(--m3)", ini:"EP", who:"Emma Petit", role:"Responsable Merchandising", mission:"Mission 3 · Aménagement",
+  title:"Le bureau de l'aménagement", msg:"Les cartons sont arrivés mais personne n'a suivi le plan ! Replacez tout, vérifiez la promo, puis ouvrez le cadenas des cartons.",
+  comp:[["C1.3","Participer à la mise en valeur de l'offre"],["C2.1","Mettre en œuvre les techniques de marchandisage"],["C3.1","Organiser son activité"]], res:"Ressource 05", icon:"🏷️", clue:'<strong>Étiquette de carton :</strong> « De combien de rangs reculer ? Autant que le nombre d\'<strong>espaces du festival</strong> (dossier ressources). »',
+  hint:"Stock au fond, produits phares au centre, accueil à l'entrée (exemple de la Ressource 05). Promo : calcule figurines et mangas séparément. Cadenas : compte les coches de « Les bonnes pratiques »."},
+ {id:"b4", c:"var(--m4)", ini:"TG", who:"Thomas Girard", role:"Responsable Animation", mission:"Mission 4 · Animation",
+  title:"Le bureau des animations", msg:"Cinq visiteurs très différents arrivent sur le stand… et j'ai laissé un message codé dans ma boîte à animations. À vous de le déchiffrer !",
+  comp:[["C1.4","Participer à une animation commerciale"],["C2.2","Valoriser l'offre commerciale"]], res:"Ressource 06", icon:"🎟️", clue:'<strong>Ticket de tombola :</strong> « Exemple : avec un recul de 2 rangs, la lettre D devient B. »',
+  hint:"Pense au temps disponible et à ce que chaque visiteur connaît déjà. Les 6 types d'animations sont dans la Ressource 06. Message codé : 1 = A, 2 = B, 3 = C…"},
+ {id:"b5", c:"var(--m5)", ini:"LM", who:"Léa Martin", role:"Responsable Relation Client", mission:"Mission 5 · Fidélisation",
+  title:"Le bureau de la relation client", msg:"Un premier visiteur arrive ! Montrez-moi un accueil parfait, puis ouvrez le coffre de la caisse : mon indice est dedans.",
+  comp:[["C2.4","Participer à la fidélisation de la clientèle"],["C3.2","Communiquer avec le client"]], res:"Ressource 07", icon:"💳", clue:'<strong>Carte de Léa :</strong> « Le code est un mot japonais qui désigne un grand passionné de mangas. S\'il ne veut rien dire, recomptez ! »',
+  hint:"Accueil sans pression, questions ouvertes, reformulation, fidélisation, prise de congé. Les 7 étapes sont dans la Ressource 07. Pour le coffre, lis « Le saviez-vous ? » en bas de la Ressource 07."}
+];
+const LOOK={b1:{t:"#EFE3F9",burst:"がんばって!<br><span>GANBATTE!</span>"},b2:{t:"#E0EDFC",burst:"LET'S GO!<br><span>行くぞ!</span>"},b3:{t:"#E6F3DB",burst:"行くぞ!<br><span>LET'S GO!</span>"},b4:{t:"#FDE7D6",burst:"PRÊTS ?<br><span>À VOUS DE JOUER !</span>"},b5:{t:"#FFF2C2",burst:"ON VOUS<br><span>CHOUCHOUTE !</span>"}};
+BUREAUX.forEach(b=>Object.assign(b,LOOK[b.id]));
+
+/* ---------- state ---------- */
+let S = fresh();
+function fresh(){return {team:"",start:0,penalty:0,done:{},hinted:{},errors:0,finalDone:false,endAt:0,overShown:false};}
+function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S));}catch(e){}}
+function load(){try{const r=localStorage.getItem(SAVE_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
+
+const $ = (s,el=document)=>el.querySelector(s);
+const app = $("#app");
+const esc = s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle = a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const fmt = ms=>{const neg=ms<0;ms=Math.abs(ms);const m=Math.floor(ms/60000),s=Math.floor(ms%60000/1000);return (neg?"+":"")+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");};
+const mask = (sz=30)=>`<svg viewBox="0 0 100 100" width="${sz}" height="${sz}" aria-hidden="true"><use href="#mask"/></svg>`;
+
+/* ---------- HUD / timer ---------- */
+let tick=null;
+function remaining(){const now=S.finalDone?S.endAt:Date.now();return DURATION-(now-S.start)-S.penalty;}
+function renderHud(){
+  $("#hud").hidden = !S.start;
+  $("#teamtag").textContent = S.team ? "Équipe "+S.team : "";
+  $("#slots").innerHTML = BUREAUX.map(b=>{const got=S.done[b.id];return `<div class="slot ${got?"filled":""}" title="${b.who}"><small>${b.ini}</small>${got?b.icon:""}</div>`;}).join("");
+  updTimer();
+}
+function updTimer(){
+  if(!S.start) return;
+  const r = remaining(), t=$("#timer");
+  t.textContent = fmt(r);
+  t.className = "timer"+(r<0?" over":r<5*60000?" warn":"");
+  if(r<=0 && !S.overShown && !S.finalDone){S.overShown=true;save();modal(`<h3>Le festival ouvre ses portes !</h3><p>Le temps est écoulé et la tablette est toujours verrouillée. Vous pouvez continuer : le chrono comptera le temps supplémentaire en rouge.</p><div class="row" style="margin-top:16px"><button class="btn red" data-close>Continuer la partie</button></div>`);}
+}
+function startTick(){clearInterval(tick);tick=setInterval(updTimer,1000);}
+
+/* ---------- modal ---------- */
+function modal(html,onMount){
+  const m=document.createElement("div");m.className="modal";m.innerHTML=`<div class="card" role="dialog" aria-modal="true">${html}</div>`;
+  document.body.appendChild(m);
+  m.addEventListener("click",e=>{if(e.target===m||e.target.closest("[data-close]"))m.remove();});
+  onMount&&onMount(m);
+  const f=m.querySelector("input,button");f&&f.focus();
+  return m;
+}
+
+/* ---------- screens ---------- */
+function intro(){
+  const saved = load();
+  const canResume = saved && saved.start && !saved.finalDone;
+  app.innerHTML = `
+  <section class="intro">
+    <div class="intro-hero">
+      <div class="eyebrow">Escape game · Seconde MRC</div>
+      <h1 class="big">Panique<br><span>au festival !</span></h1>
+      <div class="mail">
+        <span class="pin"></span>
+        <div class="from">${mask(34)}<div><strong style="color:var(--ink)">Antoine Dubois</strong><br>Directeur de Neko Event · 8h15</div></div>
+        <blockquote>« Le Festival Manga &amp; Pop Culture de Pont-à-Mousson ouvre dans <strong>45 minutes</strong> et la tablette de caisse du stand est verrouillée ! Je suis coincé dans les bouchons. Chaque responsable a caché <strong>un indice</strong> pour retrouver le code. Allez les voir, réussissez leurs défis et ouvrez le stand avant l'arrivée du public. Je compte sur vous ! »</blockquote>
+      </div>
+      <div class="rules">
+        <div class="rule"><b>5</b><p>bureaux à visiter, dans l'ordre que vous voulez. Chaque bureau se termine par un <strong>cadenas</strong> qui cache un indice. Il faudra combiner les 5 indices pour trouver le code.</p></div>
+        <div class="rule"><b>45'</b><p>pour ouvrir la tablette. Chaque erreur coûte <strong>30 secondes</strong>, chaque indice <strong>2 minutes</strong>.</p></div>
+        <div class="rule"><b>?</b><p>Le <strong>dossier ressources</strong> est indispensable : les codes des cadenas ne se trouvent que dedans.</p></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2 style="font-size:24px">Votre équipe</h2>
+      <p style="color:var(--ink-soft);font-size:14px;margin-top:4px">Équipes de 3 à 4 assistants commerciaux.</p>
+      <form id="startForm">
+        <div class="field"><label for="team">Nom de l'équipe</label><input id="team" maxlength="30" required placeholder="Ex. : Les Kitsune"></div>
+        <div class="field"><label for="members">Prénoms des membres</label><input id="members" maxlength="80" placeholder="Ex. : Inès, Hugo, Sarah"></div>
+        <button class="btn red" type="submit" style="width:100%;margin-top:6px">Lancer le chrono</button>
+      </form>
+      ${canResume?`<button class="btn ghost" id="resume" style="width:100%;margin-top:10px">Reprendre la partie de « ${esc(saved.team)} »</button>`:""}
+    </div>
+  </section>`;
+  $("#startForm").addEventListener("submit",e=>{
+    e.preventDefault();
+    S=fresh(); S.team=$("#team").value.trim()||"Neko"; S.members=$("#members").value.trim(); S.start=Date.now(); save(); startTick(); renderHud(); hub();
+  });
+  canResume && $("#resume").addEventListener("click",()=>{S=Object.assign(fresh(),saved);startTick();renderHud();hub();});
+  renderHud();
+}
+
+function hub(){
+  const n = Object.keys(S.done).length;
+  app.innerHTML = `
+  <div class="hub-head">
+    <div><div class="eyebrow">Plan du stand · ${n}/5 indices récupérés</div><h2 class="banner">Les bureaux Neko Event</h2></div>
+    <p>Choisissez un bureau. Chaque responsable vous confie un défi lié à sa mission.</p>
+  </div>
+  <div class="bureaux">${BUREAUX.map(b=>`
+    <button class="bureau ${S.done[b.id]?"done":""}" style="--c:${b.c};--t:${b.t}" data-b="${b.id}">
+      <span class="pin"></span><span class="burst">${b.burst}</span>
+      ${S.done[b.id]?`<span class="stamp-done">VALIDÉ ✓</span>`:""}
+      <div class="top"><div class="avatar">${b.ini}</div><div><small>${b.mission}</small><strong>${b.who}</strong></div></div>
+      <div class="body">
+        <h3>${b.title}</h3>
+        <div class="chips">${b.comp.map(c=>`<span class="chip">${c[0]}</span>`).join("")}</div>
+        <div class="status ${S.done[b.id]?"done":""}">${S.done[b.id]?`✓ Indice récupéré ${b.icon}`:"→ Entrer dans le bureau"}</div>
+      </div>
+    </button>`).join("")}
+  </div>
+  <div class="final-card">
+    <div><h3>La tablette de caisse</h3><p>${n<5?`Encore ${5-n} indice${5-n>1?"s":""} à trouver avant de tenter le code.`:"Les 5 indices sont réunis. Déchiffrez le code !"}</p></div>
+    <button class="btn red" id="toFinal" ${n<5?"disabled":""}>Déverrouiller la tablette</button>
+  </div>
+  ${footer()}`;
+  app.querySelectorAll("[data-b]").forEach(el=>el.addEventListener("click",()=>room(el.dataset.b)));
+  $("#toFinal").addEventListener("click",finalRoom);
+  bindFooter(); window.scrollTo(0,0);
+}
+
+function footer(){return `<svg class="torii" viewBox="0 0 180 90" aria-hidden="true"><g fill="#D3202E"><path d="M4 10 Q90 -2 176 10 L172 20 Q90 10 8 20Z" fill="#1B1718"/><rect x="18" y="22" width="144" height="8"/><rect x="34" y="18" width="10" height="72"/><rect x="136" y="18" width="10" height="72"/><rect x="85" y="30" width="10" height="12"/></g></svg><div class="footer"><span>Neko Event · Donnons vie à vos passions !</span><span><button class="linkbtn" id="teacher">Espace enseignant</button> · <button class="linkbtn" id="reset">Nouvelle partie</button></span></div>`;}
+function bindFooter(){
+  const t=$("#teacher"); t&&t.addEventListener("click",teacher);
+  const r=$("#reset"); r&&r.addEventListener("click",()=>modal(`<h3>Recommencer ?</h3><p>La progression de l'équipe « ${esc(S.team)} » sera effacée.</p><div class="row" style="margin-top:16px"><button class="btn red" id="doReset">Effacer et recommencer</button><button class="btn ghost" data-close>Annuler</button></div>`,m=>{
+    $("#doReset",m).addEventListener("click",()=>{try{localStorage.removeItem(SAVE_KEY);}catch(e){} S=fresh();clearInterval(tick);m.remove();intro();});
+  }));
+}
+
+/* ---------- room scaffolding ---------- */
+let currentRoom=null;
+function room(id){
+  const b = BUREAUX.find(x=>x.id===id); currentRoom=b;
+  app.innerHTML = `
+  <button class="back" id="back">← Retour aux bureaux</button>
+  <div class="room-head" style="--c:${b.c};--t:${b.t}">
+    <span class="pin"></span><span class="burst">${b.burst}</span>
+    <div class="avatar">${b.ini}</div>
+    <div><div class="who">${b.role}</div><h2>${b.who}</h2></div>
+    <div class="bubble">« ${b.msg} »</div>
+  </div>
+  <div id="steps" style="--c:${b.c};--t:${b.t}"></div>
+  <div class="card" style="--c:${b.c};--t:${b.t}">
+    <div class="row" style="justify-content:space-between">
+      <span class="res-ref">📂 À consulter : ${b.res}</span>
+      <button class="btn ghost small" id="hintBtn">${S.hinted[b.id]?"Revoir l'indice":"Indice (−2 min)"}</button>
+    </div>
+    <div class="hint-box" id="hintBox">${S.hinted[b.id]?esc(b.hint):""}</div>
+  </div>
+  ${footer()}`;
+  $("#back").addEventListener("click",hub);
+  $("#hintBtn").addEventListener("click",()=>{
+    if(!S.hinted[b.id]){S.hinted[b.id]=true;S.penalty+=PENALTY;save();updTimer();$("#hintBtn").textContent="Revoir l'indice";}
+    $("#hintBox").textContent=b.hint;
+  });
+  bindFooter();
+  ROOMS[id]($("#steps"),b);
+  window.scrollTo(0,0);
+}
+function step(container,n,title,q,locked){
+  const el=document.createElement("section");el.className="step"+(locked?" locked":"");
+  el.innerHTML=`<h3><span class="n">${n}</span>${title}</h3><p class="q">${q}</p><div class="sb"></div><div class="fb" aria-live="polite"></div>`;
+  container.appendChild(el);return el;
+}
+function fb(el,ok,txt,free){const f=el.querySelector(":scope > .fb");f.className="fb "+(ok?"ok":"ko");if(!ok&&!free){S.errors++;S.penalty+=WRONG;save();updTimer();txt+=" <strong>(−30 s)</strong>";flashTimer();}f.innerHTML=txt;if(!ok){f.style.animation="none";void f.offsetWidth;f.style.animation="";}}
+function flashTimer(){const t=$("#timer");if(t&&t.animate)t.animate([{transform:"scale(1.3)",color:"#ff5a66"},{transform:"scale(1)"}],{duration:700});}
+function unlock(el){el&&el.classList.remove("locked");}
+function solved(el){el.classList.add("solved");el.querySelectorAll("button,input,select").forEach(x=>{if(!x.closest(".fb"))x.disabled=true;});}
+function winBureau(b,container){
+  if(!S.done[b.id]){S.done[b.id]=true;save();renderHud();}
+  const el=document.createElement("section");el.className="step solved";
+  el.innerHTML=`<h3><span class="n" style="background:var(--ok)">✓</span>Bureau terminé !</h3>
+  <p class="q">Vous découvrez un indice :</p><div class="clue" style="--c:${b.c};--t:${b.t}"><span class="ci">${b.icon}</span><div>${b.clue}</div></div><p class="q" style="margin-top:12px">Il est rangé dans votre inventaire (en haut de l'écran). Il servira pour la tablette !</p>
+  <button class="btn red">Retour aux bureaux</button>`;
+  container.appendChild(el);el.querySelector("button").addEventListener("click",hub);
+  el.scrollIntoView({behavior:"smooth",block:"center"});
+}
+function alreadyDone(b,container){
+  if(!S.done[b.id]) return false;
+  const el=document.createElement("section");el.className="step solved";
+  el.innerHTML=`<h3><span class="n" style="background:var(--ok)">✓</span>Bureau déjà terminé</h3><div class="clue" style="--c:${b.c};--t:${b.t};margin-bottom:12px"><span class="ci">${b.icon}</span><div>${b.clue}</div></div><button class="btn ghost small">Rejouer ce bureau pour s'entraîner</button>`;
+  container.appendChild(el);
+  el.querySelector("button").addEventListener("click",()=>{container.innerHTML="";ROOMS[b.id](container,b,true);});
+  return true;
+}
+
+/* single-choice helper */
+function choice(el,opts,correctIdx,cls,render,onOk,expl){
+  const box=el.querySelector(".sb");box.innerHTML=`<div class="opts ${cls||""}">${opts.map((o,i)=>`<button class="opt ${render?"logo-opt":""}" data-i="${i}">${render?render(o,i):esc(o)}</button>`).join("")}</div>`;
+  box.querySelectorAll(".opt").forEach(btn=>btn.addEventListener("click",()=>{
+    const i=+btn.dataset.i;
+    box.querySelectorAll(".opt").forEach(x=>x.classList.remove("good","bad"));
+    const lab=j=>render?LOGO_LABELS[j]:"« "+(opts[j].length>45?opts[j].slice(0,45)+"…":opts[j])+" »";
+    if(i===correctIdx){btn.classList.add("good");fb(el,true,expl[i]+`<ul style="margin:8px 0 0;padding-left:18px;font-size:14px">${expl.map((e,j)=>j===i?"":`<li><strong>${esc(lab(j))}</strong> : ${e}</li>`).join("")}</ul>`);solved(el);onOk();}
+    else{btn.classList.add("bad");btn.disabled=true;fb(el,false,"Ce n'est pas le bon choix. Relisez les critères de la ressource avant de recliquer.");}
+  }));
+}
+/* ordering helper */
+function orderer(el,correct,onOk,okTxt,koTxt){
+  const box=el.querySelector(".sb");let seq=[];
+  const pool=shuffle(correct.map((t,i)=>({t,i})));
+  box.innerHTML=`<div class="pool">${pool.map(p=>`<button class="tok" data-i="${p.i}">${esc(p.t)}</button>`).join("")}</div><div class="seq"></div><div class="row"><button class="btn small" data-v>Vérifier</button><button class="btn ghost small" data-r>Effacer</button></div>`;
+  const seqEl=box.querySelector(".seq");
+  const draw=()=>{seqEl.innerHTML=seq.map((i,k)=>`<span class="tok"><i>${k+1}.</i>${esc(correct[i])}</span>`).join("");box.querySelectorAll(".pool .tok").forEach(b=>b.classList.toggle("used",seq.includes(+b.dataset.i)));};
+  box.querySelectorAll(".pool .tok").forEach(b=>b.addEventListener("click",()=>{seq.push(+b.dataset.i);draw();}));
+  box.querySelector("[data-r]").addEventListener("click",()=>{seq=[];draw();});
+  box.querySelector("[data-v]").addEventListener("click",()=>{
+    if(seq.length<correct.length){fb(el,false,"Placez toutes les étiquettes avant de vérifier.",1);return;}
+    if(seq.every((v,k)=>v===k)){fb(el,true,okTxt);solved(el);onOk();}
+    else{fb(el,false,koTxt);seq=[];draw();}
+  });
+  draw();
+}
+
+const norm=v=>String(v).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Z0-9]/g,"");
+let uid=0;
+function classify(el,items,cats,onOk,okTxt){
+  const box=el.querySelector(".sb");const order=shuffle(items.map((_,i)=>i));
+  box.innerHTML=`<div class="match">${order.map(i=>`<div class="mrow"><div class="who">${items[i].label}</div><select data-i="${i}" id="cl-${++uid}" aria-label="Réponse"><option value="">Choisir…</option>${shuffle(Object.entries(cats)).map(([k,t])=>`<option value="${k}">${t}</option>`).join("")}</select></div>`).join("")}</div><div class="row" style="margin-top:12px"><button class="btn small" data-v>Vérifier</button></div>`;
+  box.querySelector("[data-v]").addEventListener("click",()=>{
+    const sels=[...box.querySelectorAll("select")];
+    if(sels.some(x=>!x.value)){fb(el,false,"Complétez toutes les lignes avant de vérifier.",1);return;}
+    const wrong=sels.filter(x=>!items[+x.dataset.i].ok.includes(x.value)).length;
+    if(!wrong){box.querySelectorAll(".mrow").forEach(r=>r.classList.add("good"));fb(el,true,okTxt);solved(el);onOk();}
+    else fb(el,false,`${wrong} réponse${wrong>1?"s sont fausses":" est fausse"}. Vérifiez dans le dossier ressources.`);
+  });
+}
+function padlock(el,answers,ph,onOk,okTxt,numeric){
+  const box=el.querySelector(".sb");
+  box.innerHTML=`<form class="padlock"><div class="lock-ico" aria-hidden="true">🔒</div><input class="lock-in" id="pl-${++uid}" ${numeric?'inputmode="numeric"':''} autocomplete="off" aria-label="Code du cadenas" placeholder="${ph}"><button class="btn red">Ouvrir</button></form>`;
+  box.querySelector("form").addEventListener("submit",e=>{e.preventDefault();
+    const v=norm(box.querySelector("input").value);if(!v)return;
+    if(answers.includes(v)){box.querySelector(".lock-ico").textContent="🔓";fb(el,true,okTxt);solved(el);onOk();}
+    else fb(el,false,"Le cadenas ne s'ouvre pas.");
+  });
+}
+
+/* ---------- LOGOS (Bureau 1) ---------- */
+const LOGOS=[
+ ()=>`<svg viewBox="0 0 120 120"><rect width="120" height="120" rx="10" fill="#fff"/>${[0,1,2,3,4,5].map(i=>`<circle cx="${20+i*16}" cy="${22+(i%2)*10}" r="9" fill="${["#e63946","#f4a261","#2a9d8f","#8338ec","#ffbe0b","#06d6a0"][i]}"/>`).join("")}<path d="M30 50 Q60 30 90 50 Q100 80 60 95 Q20 80 30 50Z" fill="#ffd6e0" stroke="#8338ec" stroke-width="2"/><circle cx="48" cy="62" r="4" fill="#2a9d8f"/><circle cx="72" cy="62" r="4" fill="#e63946"/><path d="M40 75 Q60 85 80 75" stroke="#f4a261" stroke-width="2" fill="none"/>${[0,1,2,3,4,5,6,7].map(i=>`<path d="M${10+i*13} 104 l4 -6 l4 6z" fill="${["#ffbe0b","#06d6a0","#e63946","#8338ec"][i%4]}"/>`).join("")}<text x="60" y="117" font-size="4.2" text-anchor="middle" fill="#666">Neko Event festival manga pop culture goodies figurines peluches Pont-à-Mousson 2026</text></svg>`,
+ ()=>`<svg viewBox="0 0 120 120"><rect width="120" height="120" rx="10" fill="#fff"/><g transform="translate(18 8) scale(.84)"><use href="#mask"/></g><text x="60" y="114" font-size="13" text-anchor="middle" font-weight="700" font-family="Comic Sans MS, Comic Neue, cursive" fill="#1B1718">NEKO <tspan fill="#D3202E">EVENT</tspan></text></svg>`,
+ ()=>`<svg viewBox="0 0 120 120"><rect width="120" height="120" rx="10" fill="#fff"/><g fill="none" stroke="#2a6f97" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 34 h12 l10 40 h44 l8 -28 H40"/></g><circle cx="50" cy="86" r="6" fill="#2a6f97"/><circle cx="82" cy="86" r="6" fill="#2a6f97"/><text x="60" y="110" font-size="11" text-anchor="middle" font-family="Arial, sans-serif" fill="#2a6f97">Neko Event</text></svg>`,
+ ()=>`<svg viewBox="0 0 120 120"><rect width="120" height="120" rx="10" fill="#fff"/><circle cx="60" cy="62" r="38" fill="none" stroke="#1f5fae" stroke-width="7"/><g fill="#1f5fae"><ellipse cx="60" cy="72" rx="15" ry="12"/><circle cx="42" cy="54" r="6"/><circle cx="53" cy="45" r="6"/><circle cx="67" cy="45" r="6"/><circle cx="78" cy="54" r="6"/></g><text x="60" y="16" font-size="10" text-anchor="middle" font-weight="700" font-family="Arial, sans-serif" fill="#1f5fae">NEKO EVENT</text></svg>`
+];
+const LOGO_LABELS=["Proposition A","Proposition B","Proposition C","Proposition D"];
+
+/* ---------- ROOMS ---------- */
+const ROOMS={
+ b1(c,b,replay){
+  if(!replay && alreadyDone(b,c)) return;
+  const s1=step(c,1,"Trier les critères","Le stagiaire a mélangé les critères d'un bon logo et ceux d'un bon slogan… et il a glissé deux intrus. Classez chaque carte.");
+  const s2=step(c,2,"Auditer les logos","Pour chaque proposition du stagiaire, indiquez le critère du logo qui n'est PAS respecté.",true);
+  const s3=step(c,3,"Choisir le slogan","Un seul slogan respecte les 4 critères d'un bon slogan.",true);
+  const s4=step(c,4,"Ouvrir le tiroir de Camille","Un post-it est collé sur le tiroir : <em>« Mon code à 3 chiffres = le nombre de VALEURS de Neko Event, puis le nombre d'ÉTAPES pour créer un logo, puis le nombre de PRODUITS de notre catalogue. »</em>",true);
+  classify(s1,[
+   {label:"Simple et reconnaissable",ok:["logo"]},{label:"En lien avec l'univers manga et la pop culture",ok:["logo"]},{label:"Facile à reproduire sur différents supports",ok:["logo"]},{label:"Original et mémorable",ok:["logo"]},
+   {label:"Court et facile à retenir",ok:["slogan"]},{label:"En accord avec nos valeurs",ok:["slogan"]},{label:"Dynamique et positif",ok:["slogan"]},{label:"Une véritable accroche pour nos visiteurs",ok:["slogan"]},
+   {label:"Contenir au moins six couleurs différentes",ok:["intrus"]},{label:"Citer tous les produits vendus sur le stand",ok:["intrus"]}],
+   {logo:"Critère du LOGO",slogan:"Critère du SLOGAN",intrus:"Intrus"},()=>unlock(s2),"Tout est bien classé ! Ces 8 critères vont vous servir pour la suite.");
+  const crit={simple:"Simple et reconnaissable",lien:"En lien avec l'univers manga",reproduire:"Facile à reproduire sur différents supports",original:"Original et mémorable",aucun:"Aucun : tous les critères sont respectés"};
+  classify(s2,[
+   {label:`${LOGOS[0]()}<strong>Proposition A</strong>`,ok:["simple","reproduire"]},
+   {label:`${LOGOS[1]()}<strong>Proposition B</strong>`,ok:["aucun"]},
+   {label:`${LOGOS[2]()}<strong>Proposition C</strong>`,ok:["lien"]},
+   {label:`${LOGOS[3]()}<strong>Proposition D</strong>`,ok:["original"]}],crit,()=>unlock(s3),
+   "Exact ! A : trop de détails et de couleurs, il est illisible sur un petit badge. C : un caddie n'a aucun lien avec le manga. D : c'est la copie d'un logo d'exemple de la Ressource 03, il n'est pas original. Seul B respecte tout.",true);
+  choice(s3,["Neko Event, la passion du manga pour petits et grands, dans tous les festivals de France et même en ligne !","Neko Event : vos héros prennent vie !","Chez Neko Event, c'est pas cher et y'a de tout !","Mangas, figurines, peluches, mugs, sacs."],1,"",null,()=>unlock(s4),[
+   "Positif et lié aux valeurs, mais beaucoup trop long : un slogan doit se retenir en quelques secondes.",
+   "Excellent ! Court, positif, dynamique, il parle directement aux passionnés et rappelle « Donnons vie à vos passions ».",
+   "Registre familier et argument uniquement sur le prix : ce n'est pas l'image de Neko Event.",
+   "C'est une liste de produits, pas une accroche : elle ne transmet aucune émotion."]);
+  padlock(s4,["558"],"• • •",()=>winBureau(b,c),"Clic ! 5 valeurs (Ressource 01), 5 étapes pour créer un logo (Ressource 03) et 8 produits (Ressource 01). Le tiroir s'ouvre…",true);
+ },
+ b2(c,b,replay){
+  if(!replay && alreadyDone(b,c)) return;
+  const s1=step(c,1,"Repérer les 6 erreurs","Cliquez sur les éléments de la publication qui posent problème. Attention : cliquer sur un élément correct coûte 30 secondes.");
+  const s2=step(c,2,"Le bon outil pour chaque tâche","Lucas a une liste de tâches. Pour chacune, quel outil de Neko Event faut-il utiliser ?",true);
+  const s3=step(c,3,"Se connecter au compte Instagram","Au dos d'un post-it, Lucas a noté : <em>« Mot de passe = les initiales des 4 objectifs d'une communication efficace, dans l'ordre où ils apparaissent dans le dossier. »</em>",true);
+  const ZONES=[
+   {k:"head",bad:false,html:`<span class="ig-head"><span class="ig-av">${mask(22)}</span>neko_event</span>`,why:"Le compte officiel et le logo sont bien visibles : c'est correct."},
+   {k:"title",bad:false,html:`<span class="ig-img"><span>${mask(70)}</span><span class="t">NEKO EVENT<br>AU FESTIVAL MANGA</span><span class="pale">Stand n°12 · Espace Boutiques · Sam. et dim. 10h-18h</span></span>`,why:"Le titre est grand et lisible. Regardez plutôt le petit texte en dessous…"},
+   {k:"pale",bad:true,html:"",why:"Texte gris foncé sur fond sombre : les infos pratiques sont illisibles. Ressource 04 : « Soyez visible »."},
+   {k:"surprise",bad:false,html:"Des surprises exclusives t'attendent sur notre stand ! 🎁",why:"Message court et accrocheur : c'est correct."},
+   {k:"fote",bad:true,html:"Venez nombreu, sa va être trop bien !!!",why:"Fautes d'orthographe (« nombreux », « ça ») et ton trop familier : cela donne une mauvaise image de l'entreprise."},
+   {k:"date",bad:true,html:"📅 Rendez-vous bientôt !",why:"Pas de date ! Le visiteur ne sait pas quand venir."},
+   {k:"lieu",bad:true,html:"📍 On sera quelque part dans le festival 😉",why:"Pas de lieu précis ! Il faut indiquer la ville et l'emplacement du stand."},
+   {k:"anim",bad:false,html:"Photobooth et quiz manga tout le week-end 🐱",why:"Annoncer les animations donne envie de venir : c'est correct."},
+   {k:"goodies",bad:true,html:"Goodies offerts… s'il en reste 🤷",why:"Message négatif et peu engageant : une publication doit donner envie, pas décourager."},
+   {k:"tag",bad:true,html:"<span style='color:#00376b;word-break:break-all'>#nekoeventaufestivalmangaetpopculturedepontamoussonedition2026</span>",why:"Hashtag beaucoup trop long : impossible à retenir ou à taper."},
+   {k:"tag2",bad:false,html:"<span style='color:#00376b'>#NekoEvent</span>",why:"Hashtag court et facile à retenir : c'est correct."}
+  ];
+  const box=s1.querySelector(".sb");
+  box.innerHTML=`<div class="insta-wrap"><div class="insta">
+   <button class="hot" data-k="head">${ZONES[0].html}</button>
+   <div style="position:relative"><button class="hot" data-k="title" style="padding:0;border-radius:0">${ZONES[1].html}</button>
+   <button class="hot" data-k="pale" style="position:absolute;left:12%;right:12%;bottom:10%;width:76%;height:30px;padding:0" aria-label="Petit texte d'informations pratiques"></button></div>
+   <div style="padding:2px 4px 8px">${ZONES.slice(3).map(z=>`<button class="hot" data-k="${z.k}">${z.html}</button>`).join("")}</div>
+  </div>
+  <div><div class="counter"><span id="nf">0</span>/6</div><p style="color:var(--ink-soft);font-size:14px">erreurs trouvées</p><ul class="found-list" id="fl" style="padding:0"></ul></div></div>`;
+  const found=new Set();
+  box.querySelectorAll(".hot").forEach(h=>h.addEventListener("click",()=>{
+    const z=ZONES.find(x=>x.k===h.dataset.k);
+    if(z.bad){
+      if(found.has(z.k))return;found.add(z.k);h.classList.add("found");
+      $("#fl").insertAdjacentHTML("beforeend",`<li class="fb ko" style="margin:0">✗ ${z.why}</li>`);
+      $("#nf").textContent=found.size;
+      if(found.size===6){fb(s1,true,"Les 6 erreurs sont trouvées ! Une bonne publication dit clairement QUI, QUOI, QUAND et OÙ, sans faute et avec un ton positif.");solved(s1);unlock(s2);}
+    } else {h.classList.remove("miss");void h.offsetWidth;h.classList.add("miss");fb(s1,false,"Cet élément est correct.");}
+  }));
+  classify(s2,[
+   {label:"Créer l'affiche A3 du stand",ok:["canva"]},{label:"Enregistrer une annonce audio pour la vente flash",ok:["vocaroo"]},
+   {label:"Fabriquer une publication Instagram fictive",ok:["zeoob"]},{label:"Dessiner la carte de fidélité",ok:["canva"]},
+   {label:"Partager un lien vers un message vocal, sans créer de compte",ok:["vocaroo"]},{label:"Choisir le format « Instagram Post » puis prévisualiser",ok:["zeoob"]}],
+   {canva:"Canva",vocaroo:"Vocaroo",zeoob:"Zeoob"},()=>unlock(s3),"Bien joué ! Canva pour les supports visuels, Vocaroo pour les messages vocaux, Zeoob pour les publications Instagram.");
+  padlock(s3,["AICF"],"Mot de passe",()=>winBureau(b,c),"Connecté ! Attirer, Informer, Convaincre, Fidéliser (Ressource 04). Dans les messages privés de Lucas, vous trouvez…");
+ },
+ b3(c,b,replay){
+  if(!replay && alreadyDone(b,c)) return;
+  const s1=step(c,1,"Replacer les éléments du stand","Sélectionnez un élément à droite, puis cliquez sur la zone du stand où il doit aller. Le public arrive par l'allée, en bas du plan.");
+  const s2=step(c,2,"Calculer le prix de la promotion","Emma a préparé deux offres spéciales festival. Calculez ce que paie le client.",true);
+  const s3=step(c,3,"Ouvrir le cadenas des cartons","Sur le carton fermé, Emma a écrit : <em>« Code = le montant que vous venez de calculer, suivi du nombre de bonnes pratiques d'aménagement du dossier ressources. »</em>",true);
+  const ITEMS=[{k:"stock",t:"📦 Cartons de stock",ok:["fond"]},{k:"phares",t:"⭐ Figurines nouveautés (produits phares)",ok:["centre"]},{k:"mangas",t:"📚 Présentoir mangas",ok:["gauche","droite"]},{k:"peluches",t:"🧸 Présentoir peluches",ok:["gauche","droite"]},{k:"accueil",t:"🛎️ Accueil et caisse",ok:["devant"]}];
+  const ZN={fond:"Fond du stand",gauche:"Côté gauche",centre:"Centre",droite:"Côté droit",devant:"Entrée du stand"};
+  const place={};let sel=null;
+  const box=s1.querySelector(".sb");
+  box.innerHTML=`<div class="plan-wrap"><div><div class="plan">${["fond","gauche","centre","droite","devant"].map(z=>`<div class="zone ${z}" data-z="${z}" role="button" tabindex="0"><span class="zl">${ZN[z]}</span><span class="zi"></span></div>`).join("")}</div><div class="allee">↑ ALLÉE DU FESTIVAL ↑</div></div>
+   <div><div class="items">${ITEMS.map(i=>`<button class="item" data-k="${i.k}">${i.t}</button>`).join("")}</div><div class="row" style="margin-top:12px"><button class="btn small" data-v>Vérifier le plan</button><button class="btn ghost small" data-r>Tout retirer</button></div></div></div>`;
+  const draw=()=>{
+    box.querySelectorAll(".zone").forEach(z=>{const k=Object.keys(place).find(x=>place[x]===z.dataset.z);z.querySelector(".zi").textContent=k?ITEMS.find(i=>i.k===k).t:"";z.classList.toggle("armed",!!sel);z.classList.remove("good","bad");});
+    box.querySelectorAll(".item").forEach(i=>{i.classList.toggle("sel",sel===i.dataset.k);i.classList.toggle("placed",!!place[i.dataset.k]&&sel!==i.dataset.k);});
+  };
+  box.querySelectorAll(".item").forEach(i=>i.addEventListener("click",()=>{sel=sel===i.dataset.k?null:i.dataset.k;draw();}));
+  const drop=z=>{if(!sel)return;const zone=z.dataset.z;Object.keys(place).forEach(k=>{if(place[k]===zone)delete place[k];});place[sel]=zone;sel=null;draw();};
+  box.querySelectorAll(".zone").forEach(z=>{z.addEventListener("click",()=>drop(z));z.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();drop(z);}});});
+  box.querySelector("[data-r]").addEventListener("click",()=>{Object.keys(place).forEach(k=>delete place[k]);sel=null;draw();});
+  box.querySelector("[data-v]").addEventListener("click",()=>{
+    if(Object.keys(place).length<5){fb(s1,false,"Placez les 5 éléments avant de vérifier.",1);return;}
+    let wrong=0;ITEMS.forEach(i=>{if(!i.ok.includes(place[i.k]))wrong++;});
+    if(!wrong){box.querySelectorAll(".zone").forEach(z=>z.classList.add("good"));fb(s1,true,"Plan validé ! L'accueil reçoit les visiteurs dès l'entrée, les produits phares attirent le regard au centre, les présentoirs dégagent les allées sur les côtés et le stock reste discret au fond.");solved(s1);unlock(s2);}
+    else fb(s1,false,`${wrong} élément${wrong>1?"s sont mal placés":" est mal placé"}. Comparez avec l'exemple d'implantation du dossier ressources.`);
+  });
+  draw();
+  const b2=s2.querySelector(".sb");
+  b2.innerHTML=`<div class="row"><div class="price-tag">Figurine édition festival <b>25 €</b></div><div class="price-tag" style="transform:rotate(1.5deg)">Tome de manga <b>7 €</b></div></div>
+   <p style="margin-bottom:6px"><strong>Offre 1 :</strong> −20 % sur le total des figurines dès 2 figurines achetées.</p>
+   <p style="margin-bottom:12px"><strong>Offre 2 :</strong> pour 3 tomes de manga achetés, le 4<sup>e</sup> est offert.</p>
+   <p style="margin-bottom:12px">Un client achète <strong>2 figurines et 4 tomes de manga</strong>. Combien paie-t-il au total ?</p>
+   <form class="calc"><input id="calc3" inputmode="decimal" aria-label="Prix payé en euros" placeholder="… €"><button class="btn small">Valider</button></form>`;
+  b2.querySelector("form").addEventListener("submit",e=>{e.preventDefault();
+    const v=parseFloat($("#calc3").value.replace(",",".").replace(/[^\d.]/g,""));
+    if(v===61){fb(s2,true,"Exact ! Figurines : 2 × 25 € = 50 €, moins 20 % (10 €) = 40 €. Mangas : le 4<sup>e</sup> est offert, donc 3 × 7 € = 21 €. Total : <strong>61 €</strong>. Notez bien ce montant…");solved(s2);unlock(s3);}
+    else if(v===68||v===71||v===78)fb(s2,false,"Presque… mais une des deux offres n'a pas été appliquée correctement.");
+    else fb(s2,false,"Ce n'est pas le bon montant. Calculez les figurines et les mangas séparément, puis additionnez.");
+  });
+  padlock(s3,["616"],"• • •",()=>winBureau(b,c),"Clic ! 61 € suivi des 6 bonnes pratiques de la Ressource 05. Le carton s'ouvre…",true);
+ },
+ b4(c,b,replay){
+  if(!replay && alreadyDone(b,c)) return;
+  const s1=step(c,1,"Une animation pour chaque visiteur","Associez chaque visiteur à l'animation la plus adaptée. Deux animations ne servent à personne.");
+  const s2=step(c,2,"Classer les animations","Thomas a reçu 6 idées d'animations. À quel type d'animation du dossier ressources appartient chacune ?",true);
+  const s3=step(c,3,"Déchiffrer le message de Thomas","Au fond de la boîte à animations, un papier : <span class=\"cipher\">18 · 5 · 7 · 12 · 5 · 13 · 5 · 14 · 20</span><br>Au crayon, Thomas a ajouté : <em>« 1 = A »</em>. Le mot trouvé ouvre la boîte.",true);
+  const V=[{ini:"👨‍👩‍👧",t:"Une famille avec Jade, 8 ans, qui adore dessiner",ok:"atelier"},{ini:"🗿",t:"Marc, collectionneur de figurines rares",ok:"tirage"},{ini:"🎭",t:"Yuna, cosplayeuse en costume complet",ok:"photo"},{ini:"🎧",t:"Trois ados fans de jeux vidéo, qui n'ont que 15 minutes avant un concert",ok:"quiz"},{ini:"👴",t:"Gérard, 68 ans, curieux mais qui n'a jamais lu de manga",ok:"decouverte"}];
+  const A={atelier:"Atelier dessin « crée ton chibi »",tirage:"Tirage au sort d'une figurine édition limitée",photo:"Photobooth décor japonais avec impression",tournoi:"Tournoi de jeux vidéo en ligne (2 h)",quiz:"Défi « quiz manga express » en 5 minutes",decouverte:"Conseil personnalisé : « mes 3 premiers mangas »",flash:"Vente flash : −50 % pendant 10 minutes"};
+  classify(s1,V.map(v=>({label:`<span class="avatar">${v.ini}</span><span>${esc(v.t)}</span>`,ok:[v.ok]})),A,()=>unlock(s2),
+   "Bien joué ! Chaque animation répond au profil et au temps disponible du visiteur. Le tournoi de 2 h bloquerait le stand, et la vente flash est une promotion qui ne répond à aucun profil en particulier.");
+  classify(s2,[
+   {label:"Roue de la chance avec un goodie à gagner",ok:["concours"]},{label:"Déguisements et accessoires pour se faire photographier",ok:["photo"]},
+   {label:"Finir un niveau de jeu vidéo en moins d'une minute",ok:["defi"]},{label:"Atelier de customisation de tote bags",ok:["creatif"]},
+   {label:"Un illustrateur montre comment il peint une figurine",ok:["demo"]},{label:"Pack exclusif : 3 mangas + 1 tote bag à prix réduit",ok:["promo"]}],
+   {concours:"Jeu concours",photo:"Photo",defi:"Défi",creatif:"Créatif",demo:"Démonstration",promo:"Promotion"},()=>unlock(s3),"Parfait ! Vous connaissez les 6 types d'animations commerciales de la Ressource 06.");
+  padlock(s3,["REGLEMENT"],"Mot secret",()=>winBureau(b,c),"Bien déchiffré : RÈGLEMENT ! Toute animation avec des lots à gagner doit avoir un règlement. La boîte s'ouvre…");
+ },
+ b5(c,b,replay){
+  if(!replay && alreadyDone(b,c)) return;
+  const s1=step(c,1,"Accueillir et conseiller un visiteur","Choisissez à chaque fois la réplique la plus professionnelle. Une mauvaise réponse fait baisser la satisfaction du visiteur.");
+  const s2=step(c,2,"Mettre en place une action de fidélisation","Léa veut lancer une nouvelle action de fidélisation. Remettez les 7 étapes dans l'ordre.",true);
+  const s3=step(c,3,"La carte de fidélité","Le visiteur a déjà la carte de fidélité Neko Event. Aidez-le à calculer quand il aura son goodie.",true);
+  const s4=step(c,4,"Ouvrir le coffre de la caisse","Sur le coffre, une étiquette de Léa : <em>« Acquérir un nouveau visiteur coûte X à Y fois plus cher que fidéliser un visiteur existant. Code = X puis Y. »</em>",true);
+  const D=[
+   {v:"(Un visiteur s'arrête devant le stand et regarde les figurines.)",o:[["Bonjour et bienvenue chez Neko Event ! Je peux vous renseigner ?",1,"Sourire, salutation et proposition d'aide sans pression : l'accueil parfait."],["Bonjour ! Vous voulez acheter quelque chose ?",0],["Bonjour ! Nos figurines sont en promo, il n'en reste presque plus !",0]]},
+   {v:"Bonjour ! Je cherche un cadeau pour mon neveu.",o:[["Les figurines plaisent beaucoup en ce moment, je vous en montre ?",0],["Avec plaisir ! Quel âge a-t-il, et quels mangas aime-t-il ?",1,"Des questions ouvertes pour découvrir le besoin avant de proposer un produit."],["Il aime les mangas ?",0]]},
+   {v:"Il a 12 ans, il adore les mangas d'aventure. Je voudrais rester sous 30 €.",o:[["Très bien, je vous montre notre meilleure vente, elle est à 45 €.",0],["D'accord, regardez au rayon mangas, vous trouverez sûrement.",0],["Si je comprends bien : un cadeau pour un garçon de 12 ans, fan d'aventure, à moins de 30 € ?",1,"La reformulation montre que vous avez écouté et évite les erreurs."]]},
+   {v:"Oui, exactement ! Je prends ce coffret de 3 tomes à 34 €… je dépasse un peu, mais tant pis !",o:[["Merci ! Avez-vous notre carte de fidélité ? Un tampon par tranche de 10 € dépensés, et au bout de 5 tampons un goodie vous est offert.",1,"Vous fidélisez le client en lui donnant une raison de revenir."],["Très bien, ça fait 34 €. Bonne journée.",0],["Parfait ! Vous voulez aussi le tome 4 ? Et un poster ? Et un sac ?",0]]},
+   {v:"Ah oui, j'ai déjà la carte ! Merci pour vos conseils !",o:[["Avec plaisir, au revoir.",0],["De rien ! Avant de partir, vous pouvez remplir notre questionnaire de 4 pages ?",0],["Avec plaisir ! Bonne journée au festival, et à bientôt sur notre stand ou sur Instagram @neko_event !",1,"Une prise de congé chaleureuse qui donne envie de revenir et de vous suivre."]]}
+  ];
+  let k=0,sat=60;
+  const box=s1.querySelector(".sb");
+  box.innerHTML=`<div class="gauge"><span id="satf">🙂</span> <div class="bar"><div class="fill" style="width:60%"></div></div> <span id="satv">60 %</span></div><div class="chat" id="chat"></div><div class="opts" id="rep"></div>`;
+  const setSat=v=>{sat=Math.max(0,Math.min(100,v));box.querySelector(".fill").style.width=sat+"%";$("#satv").textContent=sat+" %";$("#satf").textContent=sat>=80?"😄":sat>=50?"🙂":"😟";};
+  const next=()=>{
+    const d=D[k];$("#chat").insertAdjacentHTML("beforeend",`<div class="msg v"><small>Visiteur</small>${esc(d.v)}</div>`);
+    const opts=shuffle(d.o.map((o,i)=>i));
+    $("#rep").innerHTML=opts.map(i=>`<button class="opt" data-i="${i}">${esc(d.o[i][0])}</button>`).join("");
+    $("#rep").querySelectorAll(".opt").forEach(btn=>btn.addEventListener("click",()=>{
+      const o=d.o[+btn.dataset.i];
+      if(o[1]){setSat(sat+10);$("#chat").insertAdjacentHTML("beforeend",`<div class="msg me"><small>Vous</small>${esc(o[0])}</div>`);fb(s1,true,"✓ "+o[2]);k++;
+        if(k<D.length)next();else{$("#rep").innerHTML="";setSat(100);fb(s1,true,"Le visiteur repart avec le sourire ! Accueil, découverte du besoin, reformulation, fidélisation et prise de congé : tout y est.");solved(s1);unlock(s2);}}
+      else{setSat(sat-15);btn.classList.add("bad");btn.disabled=true;fb(s1,false,"😕 Le visiteur n'est pas convaincu. Ce n'est pas la réponse la plus professionnelle.");}
+    }));
+  };
+  next();
+  orderer(s2,["Identifier les besoins","Choisir l'action","Concevoir","Communiquer","Lancer l'action","Suivre","Améliorer"],()=>unlock(s3),
+   "Bravo ! Ce sont les 7 étapes de la Ressource 07.","Ce n'est pas le bon ordre. Les 7 étapes sont dans le dossier ressources.");
+  const b3=s3.querySelector(".sb");
+  b3.innerHTML=`<div class="stamp-card"><strong style="margin-right:8px">CARTE FIDÉLITÉ</strong>${[1,2,3,4,5].map(i=>`<span class="stamp">${i===1?"🐾":i===5?"🎁":""}</span>`).join("")}</div>
+   <p style="margin-bottom:6px">Règle : <strong>1 tampon par tranche complète de 10 € dépensés</strong>. 5 tampons = 1 goodie offert.</p>
+   <p style="margin-bottom:12px">Avant aujourd'hui, le client avait <strong>1 tampon</strong>. Il vient de dépenser <strong>34 €</strong>.<br>Combien doit-il dépenser <strong>au minimum</strong> lors de sa prochaine visite pour obtenir son goodie ?</p>
+   <form class="calc"><input id="calc5" inputmode="decimal" aria-label="Montant minimum en euros" placeholder="… €"><button class="btn small">Valider</button></form>`;
+  b3.querySelector("form").addEventListener("submit",e=>{e.preventDefault();
+    const v=parseFloat($("#calc5").value.replace(",",".").replace(/[^\d.]/g,""));
+    if(v===10){b3.querySelectorAll(".stamp").forEach((s,i)=>{if(i<4){s.textContent="🐾";s.style.borderStyle="solid";s.style.borderColor="#fff";}});fb(s3,true,"Exact ! 34 € = 3 tranches complètes, donc 3 tampons. Avec celui qu'il avait : 4 tampons. Il lui en manque 1, soit <strong>10 €</strong> d'achat à sa prochaine visite.");solved(s3);unlock(s4);}
+    else fb(s3,false,"Ce n'est pas le bon montant. Comptez d'abord combien de tampons il a maintenant.");
+  });
+  padlock(s4,["57"],"• •",()=>winBureau(b,c),"Clic ! Un nouveau visiteur coûte 5 à 7 fois plus cher (Ressource 07) : fidéliser, c'est rentable. Le coffre s'ouvre…",true);
+ }
+};
+
+/* ---------- final ---------- */
+function finalRoom(){
+  if(Object.keys(S.done).length<5){hub();return;}
+  app.innerHTML=`
+  <button class="back" id="back">← Retour aux bureaux</button>
+  <div class="room-head" style="--c:var(--red);--t:#FDE0E3">
+    <span class="pin"></span><span class="burst">À VOUS<br><span>DE JOUER !</span></span>
+    <div class="avatar">AD</div>
+    <div><div class="who">Directeur de Neko Event</div><h2>Antoine Dubois</h2></div>
+    <div class="bubble">« J'arrive ! Le code de la tablette a été chiffré par sécurité. Utilisez les indices de mes responsables… et avant d'ouvrir, prouvez-moi que vous saurez présenter ce stand devant la direction. »</div>
+  </div>
+  <div id="steps" style="--c:var(--red);--t:#FDE0E3"></div>${footer()}`;
+  $("#back").addEventListener("click",hub);bindFooter();
+  const c=$("#steps");
+  const s1=step(c,1,"Déverrouiller la tablette","Combinez les 5 indices récupérés dans les bureaux pour trouver le code à 5 lettres. Le dossier ressources vous sera utile.");
+  const s2=step(c,2,"Préparer l'oral final","Pour convaincre la direction en 8 à 10 minutes, remettez dans l'ordre la structure d'un bon oral (Ressource 08).",true);
+  const box=s1.querySelector(".sb");
+  box.innerHTML=`<div class="clues">${BUREAUX.map(b=>`<div class="clue" style="--c:${b.c};--t:${b.t}"><span class="ci">${b.icon}</span><div><small>${b.who}</small><div>${b.clue}</div></div></div>`).join("")}</div><div class="alpha" aria-label="Alphabet">${"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((l,i)=>`<span><b>${l}</b><small>${i+1}</small></span>`).join("")}</div>
+   <form id="codeForm"><div class="codebox">${[...WORD].map((_,i)=>`<input id="code-${i}" maxlength="1" aria-label="Lettre ${i+1}" autocomplete="off">`).join("")}</div><button class="btn red">Entrer le code</button></form>`;
+  const ins=[...box.querySelectorAll(".codebox input")];
+  ins.forEach((inp,i)=>{inp.addEventListener("input",()=>{inp.value=inp.value.toUpperCase();if(inp.value&&ins[i+1])ins[i+1].focus();});inp.addEventListener("keydown",e=>{if(e.key==="Backspace"&&!inp.value&&ins[i-1])ins[i-1].focus();});});
+  $("#codeForm").addEventListener("submit",e=>{e.preventDefault();
+    const v=ins.map(x=>x.value.toUpperCase()).join("");
+    if(v===WORD){fb(s1,true,"🔓 Code accepté : <strong>OTAKU</strong> ! La tablette s'allume.");solved(s1);unlock(s2);s2.scrollIntoView({behavior:"smooth",block:"center"});}
+    else fb(s1,false,v==="TYFPZ"?"C'est le message chiffré ! Il faut d'abord le déchiffrer.":"Code refusé. Relisez les 5 indices et recomptez dans l'alphabet.");
+  });
+  orderer(s2,["Se présenter","Présenter le projet","Expliquer nos choix","Mettre en avant les points forts","Conclure"],()=>{S.finalDone=true;S.endAt=Date.now();save();updTimer();setTimeout(win,900);},
+   "Parfait ! C'est exactement la structure de la Ressource 08.","Ce n'est pas le bon ordre. On commence toujours par se présenter, et on termine en remerciant le jury.");
+  window.scrollTo(0,0);
+}
+
+function win(){
+  const used=(S.endAt-S.start)+S.penalty, hints=Object.keys(S.hinted).length, inTime=used<=DURATION;
+  app.innerHTML=`
+  <section class="win-hero">
+    <div class="win-mask">${mask(110)}</div>
+    <div class="eyebrow">Équipe ${esc(S.team)}${S.members?" · "+esc(S.members):""}</div>
+    <h2 style="margin-top:10px">Le stand est <span>ouvert !</span></h2>
+    <p style="max-width:56ch;margin:16px auto 0;color:var(--ink-soft)">${inTime?"Les premiers visiteurs arrivent et tout est prêt. Antoine Dubois est impressionné : vous êtes de vrais assistants commerciaux !":"Les visiteurs ont un peu attendu, mais le stand est prêt. Antoine Dubois vous félicite pour votre persévérance !"}</p>
+  </section>
+  <div class="stats">
+    <div class="stat"><b>${fmt(used).replace("+","")}</b><span>temps total (pénalités incluses)</span></div>
+    <div class="stat"><b>${hints}</b><span>indice${hints>1?"s":""} utilisé${hints>1?"s":""}</span></div>
+    <div class="stat"><b>${Math.max(0,S.errors)}</b><span>erreur${S.errors>1?"s":""} en route</span></div>
+    <div class="stat"><b>${inTime?"✓":"✗"}</b><span>${inTime?"ouvert à temps":"ouvert en retard"}</span></div>
+  </div>
+  <h3 style="font-size:22px;margin:8px 0 12px">Les compétences que vous avez mobilisées</h3>
+  <div class="table-wrap"><table>
+   <thead><tr><th>Bureau</th><th>Ce que vous avez fait</th><th>Compétences</th></tr></thead>
+   <tbody>
+    <tr><td><strong>Camille Moreau</strong><br>Identité</td><td>Trier des critères, auditer des logos, choisir un slogan</td><td>${BUREAUX[0].comp.map(c=>`<span class="code">${c[0]}</span> ${c[1]}`).join("<br>")}</td></tr>
+    <tr><td><strong>Lucas Bernard</strong><br>Communication</td><td>Corriger une publication, choisir le bon outil numérique</td><td>${BUREAUX[1].comp.map(c=>`<span class="code">${c[0]}</span> ${c[1]}`).join("<br>")}</td></tr>
+    <tr><td><strong>Emma Petit</strong><br>Aménagement</td><td>Implanter un stand, calculer une promotion</td><td>${BUREAUX[2].comp.map(c=>`<span class="code">${c[0]}</span> ${c[1]}`).join("<br>")}</td></tr>
+    <tr><td><strong>Thomas Girard</strong><br>Animation</td><td>Adapter une animation au public, classer les types d'animations</td><td>${BUREAUX[3].comp.map(c=>`<span class="code">${c[0]}</span> ${c[1]}`).join("<br>")}</td></tr>
+    <tr><td><strong>Léa Martin</strong><br>Relation client</td><td>Mener un accueil complet, construire une action de fidélisation</td><td>${BUREAUX[4].comp.map(c=>`<span class="code">${c[0]}</span> ${c[1]}`).join("<br>")}</td></tr>
+    <tr><td><strong>Antoine Dubois</strong><br>Final</td><td>Structurer une présentation orale</td><td><span class="code">C3.4</span> Argumenter et présenter une proposition</td></tr>
+   </tbody></table></div>
+  <div class="card" style="margin-top:18px"><strong>À vous de jouer maintenant !</strong><p style="color:var(--ink-soft);margin-top:4px">Ce sont exactement les étapes de votre projet Neko Event. Vous avez maintenant tout en main pour créer votre propre stand.</p></div>
+  ${footer()}`;
+  bindFooter();window.scrollTo(0,0);confetti();
+}
+function confetti(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const cols=["#D3202E","#1B1718","#F6B8C6","#7A35B5","#1166C0","#4E9A2A","#E5671A","#E3A400"];
+  for(let i=0;i<70;i++){const d=document.createElement("span");d.className="confetti";
+    d.style.cssText=`left:${Math.random()*100}vw;background:${cols[i%cols.length]};--dx:${(Math.random()*120-60)|0}px;animation-duration:${2.5+Math.random()*2.5}s;animation-delay:${Math.random()*1.2}s;border-radius:${i%3?"2px":"50%"}`;
+    document.body.appendChild(d);setTimeout(()=>d.remove(),6500);}
+}
+function petals(){
+  const box=$("#petals");if(!box)return;
+  for(let i=0;i<14;i++){const p=document.createElement("span");p.className="petal";
+    p.style.cssText=`left:${Math.random()*100}%;--dx:${(Math.random()*160-80)|0}px;animation-duration:${10+Math.random()*10}s;animation-delay:${-Math.random()*20}s;transform:scale(${.6+Math.random()*.7})`;
+    box.appendChild(p);}
+}
+petals();
+
+/* ---------- teacher ---------- */
+function teacher(){
+  modal(`<h3>Espace enseignant</h3><p style="color:var(--ink-soft);font-size:14px">Entrez le code enseignant pour voir les solutions ou valider un bureau.</p>
+   <form id="tf" class="calc" style="margin-top:12px"><input id="tcode" type="password" aria-label="Code enseignant" placeholder="Code" style="width:160px"><button class="btn small">Ouvrir</button></form><div id="tout"></div>`,m=>{
+    $("#tf",m).addEventListener("submit",async e=>{e.preventDefault();
+      let h="";
+      try{const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode($("#tcode",m).value.trim().toUpperCase()));h=[...new Uint8Array(buf)].map(x=>x.toString(16).padStart(2,"0")).join("");}catch(err){}
+      if(h!==TEACHER_HASH){$("#tout",m).innerHTML=`<div class="fb ko">Code incorrect.</div>`;return;}
+      $("#tf",m).remove();
+      $("#tout",m).innerHTML=`<div class="sol">
+        <div><b>Code final :</b> OTAKU (message chiffré TYFPZ, recul de 5 rangs = 5 espaces du festival, Ressource 02)</div>
+        <div><b>Camille :</b> critères = Ressource 03 (2 intrus : six couleurs, citer tous les produits) · logos : A simple/reproductible, B aucun, C lien manga, D original (copie de l'exemple R03) · slogan « vos héros prennent vie ! » · tiroir <b>558</b> (5 valeurs, 5 étapes, 8 produits)</div>
+        <div><b>Lucas :</b> 6 erreurs = texte illisible, « nombreu, sa », pas de date, pas de lieu, « s'il en reste », hashtag trop long · outils : affiche et carte → Canva, audio et lien vocal → Vocaroo, publication et format Instagram Post → Zeoob · mot de passe <b>AICF</b></div>
+        <div><b>Emma :</b> stock fond, figurines centre, présentoirs côtés, accueil entrée · promo <b>61 €</b> · cadenas <b>616</b> (61 + 6 bonnes pratiques)</div>
+        <div><b>Thomas :</b> Jade → atelier, Marc → tirage, Yuna → photobooth, ados → quiz express, Gérard → conseil 3 mangas · types : roue → jeu concours, déguisements → photo, niveau 1 min → défi, tote bags → créatif, illustrateur → démonstration, pack → promotion · message <b>REGLEMENT</b></div>
+        <div><b>Léa :</b> « Je peux vous renseigner ? » → « Quel âge a-t-il… ? » → reformulation → carte de fidélité → « à bientôt… Instagram » · 7 étapes de la R07 · <b>10 €</b> · coffre <b>57</b></div>
+        <div><b>Final :</b> Se présenter → Présenter le projet → Expliquer nos choix → Points forts → Conclure</div>
+        <div><b>Équipe :</b> ${esc(S.team||"—")} · pénalités : ${Math.round(S.penalty/60000)} min · erreurs : ${Math.max(0,S.errors)}</div>
+      </div>
+      ${currentRoom&&!S.done[currentRoom.id]&&$(".room-head")?`<button class="btn red small" id="skip" style="margin-top:12px">Valider le bureau de ${currentRoom.who}</button>`:""}
+      <div class="row" style="margin-top:12px"><button class="btn ghost small" id="addt">Ajouter 5 minutes</button><button class="btn ghost small" data-close>Fermer</button></div>`;
+      const sk=$("#skip",m);sk&&sk.addEventListener("click",()=>{S.done[currentRoom.id]=true;save();renderHud();m.remove();hub();});
+      $("#addt",m).addEventListener("click",()=>{S.penalty-=5*60000;S.overShown=false;save();updTimer();$("#addt",m).textContent="+5 min ajoutées ✓";});
+    });
+  });
+}
+
+intro();
+})();
+</script>
+
+</body>
+</html>
